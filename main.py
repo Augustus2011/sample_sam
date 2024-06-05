@@ -1,6 +1,7 @@
 from utils.utils import setup
 import numpy as np
 
+
 if __name__ == "__main__":
     s = setup(3)
     s.print_math()
