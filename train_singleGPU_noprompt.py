@@ -178,7 +178,6 @@ def train_model(trainloader:DataLoader,valloader:DataLoader,dir_checkpoint:str,e
                     print('largest DSC now: {}'.format(dsc))
                     torch.save(sam.state_dict(),dir_checkpoint + '/checkpoint_best.pth')
                 elif (epoch-last_update_epoch)>20:
-                    # the network haven't been updated for 20 epochs
                     print('Training finished###########')
                     break
     writer.close()
@@ -192,7 +191,7 @@ if __name__ == "__main__":
     train_img_list = args.train_img_list
     val_img_list = args.val_img_list
     
-    num_workers = 8
+    num_workers = 1
     if_vis = True
     Path(args.dir_checkpoint).mkdir(parents=True,exist_ok = True)
     path_to_json = os.path.join(args.dir_checkpoint, "args.json")
