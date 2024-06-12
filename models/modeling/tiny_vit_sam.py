@@ -16,7 +16,7 @@ from timm.models.layers import DropPath as TimmDropPath,\
     to_2tuple, trunc_normal_
 from timm.models.registry import register_model
 from typing import Tuple
-from .common import LayerNorm2d, MLPBlock, Adapter
+from common import LayerNorm2d, MLPBlock, Adapter
 from einops import rearrange
 
 

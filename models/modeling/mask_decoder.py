@@ -4,8 +4,8 @@ from torch.nn import functional as F
 
 from typing import List,Tuple,Type,Optional,Type
 
-from .common import LayerNorm2d,Adapter
-from .vit import TransformerEncoder
+from common import LayerNorm2d,Adapter
+from vit import TransformerEncoder
 from einops import rearrange
 
 class SmallDecoder(nn.Module):
