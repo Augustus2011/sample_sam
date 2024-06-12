@@ -131,6 +131,3 @@ class ViT(nn.Sequential):
             TransformerEncoder(depth, emb_size=emb_size, **kwargs)
         )
 
-
-# model = ViT()
-# print(model(torch.randn([1, 3, 32, 32])).shape)

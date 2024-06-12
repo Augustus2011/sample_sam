@@ -6,11 +6,11 @@ from torchvision.ops.boxes import batched_nms,box_area
 
 from typing import Any,Dict,List,Optional,Tuple
 
-from modeling import Sam
-from predictor import SamPredictor
+from .modeling import Sam
+from .predictor import SamPredictor
 
 
-from utils.amg import (
+from .modeling.utils.amg import (
     MaskData,
     area_from_rle,
     batch_iterator,
@@ -75,7 +75,6 @@ class SamAutomaticMaskGenerator:
         self.crop_n_points_downscale_factor = crop_n_points_downscale_factor
         self.min_mask_region_area = min_mask_region_area
         self.output_mode = output_mode
-
 
     @torch.no_grad()
     def generate(self,image:np.ndarray)->List[Dict[str,Any]]:

@@ -1,10 +1,10 @@
 import numpy as np
 
 import torch
-from modeling import Sam
+from .modeling import Sam
 from typing import Optional,Tuple
 
-from utils.transforms import ResizeLongestSide
+from .modeling.utils.transforms import ResizeLongestSide
 
 class SamPredictor:
     def __init__(self,sam_model:Sam,)->None:

@@ -4,17 +4,23 @@ import urllib.request
 import torch
 from torch.nn import functional as F
 
-from modeling import (ImageEncoderViT,MaskDecoder,PromptEncoder,Sam,TwoWayTransformer,TinyViT,)
+from .modeling import (ImageEncoderViT,MaskDecoder,PromptEncoder,Sam,TwoWayTransformer,TinyViT,)
 
 
-def build_sam_vit_h(args=None,checkpoint=None,num_classes=1):
-    return _build_sam(args=args,encoder_depth=1280,encoder_depth=32,encoder_num_heads=16,
-                      encoder_global_attn_indexes=[7,15,23,31],
-                      num_classes=num_classes,
-                      checkpoint=checkpoint,)
+
+def build_sam_vit_h(args, checkpoint=None, num_classes = 1):
+    return _build_sam(
+        args,
+        encoder_embed_dim=1280,
+        encoder_depth=32,
+        encoder_num_heads=16,
+        encoder_global_attn_indexes=[7, 15, 23, 31],
+        num_classes = num_classes,
+        checkpoint=checkpoint,
+    )
 
 
-build_sam=build_sam_vit_h
+build_sam = build_sam_vit_h
 
 
 def build_sam_vit_l(args, checkpoint=None, num_classes = 1):
@@ -29,7 +35,6 @@ def build_sam_vit_l(args, checkpoint=None, num_classes = 1):
     )
 
 
-
 def build_sam_vit_b(args, checkpoint=None, num_classes = 1):
     return _build_sam(
         args,
@@ -40,8 +45,6 @@ def build_sam_vit_b(args, checkpoint=None, num_classes = 1):
         num_classes = num_classes,
         checkpoint=checkpoint,
     )
-
-
 
 def build_sam_vit_t(args, checkpoint=None,  num_classes = 1):
     prompt_embed_dim = 256
@@ -99,8 +102,7 @@ def build_sam_vit_t(args, checkpoint=None,  num_classes = 1):
     return mobile_sam
 
 
-
-sam_model_registry={
+sam_model_registry = {
     "default": build_sam_vit_h,
     "vit_h": build_sam_vit_h,
     "vit_l": build_sam_vit_l,
@@ -108,47 +110,64 @@ sam_model_registry={
     "vit_t": build_sam_vit_t,
 }
 
-def _build_sam(args,encoder_embed_dim,encoder_depth,encoder_num_heads,encoder_global_attn_indexes,num_classes=1,checkpoint=None,):
-    dev=args.devices
-    prompt_embed_dim=256
-    image_size=1024
-    vit_patch_size=16
-    image_embedding_size=image_size//vit_patch_size
-    sam=Sam(args,
-            image_encoder=ImageEncoderViT(args=args,
-                                          depth=encoder_depth,
-                                          embed_dim=encoder_embed_dim,
-                                          image_size=image_size,
-                                          mlp_ratio=4.0,
-                                          norm_layer=partial(torch.nn.LayerNorm,eps=1e-6),
-                                          num_heads=encoder_num_heads,
-                                          patch_size=vit_patch_size,
-                                          qkv_bias=True,
-                                          use_rel_pos=True,
-                                          global_attn_indexes=encoder_global_attn_indexes,
-                                          window_size=14,
-                                          out_chans=prompt_embed_dim,
-                                          ),
-            prompt_encoder=PromptEncoder(embed_dim=prompt_embed_dim,
-                                         image_embedding_size=(image_embedding_size,image_embedding_size),
-                                         input_image_size=(image_size,image_size),
-                                         mask_in_chans=16,
-                                         ),
-                                         mask_decoder=MaskDecoder(num_multimask_outputs=num_classes,
-                                                                  transformer=TwoWayTransformer(args=args,
-                                                                                                depth=2,
-                                                                                                embedding_dim=prompt_embed_dim,
-                                                                                                mlp_dim=2048,
-                                                                                                num_heads=8,
-                                                                                                ),
-                                                                    transformer_dim=prompt_embed_dim,
-                                                                    iou_head_depth=3,
-                                                                    iou_head_hidden_dim=256,
-                                                                ),
-                                                                )
-    sam.eval()
 
-    checkpoint=Path(checkpoint)
+def _build_sam(
+    args,
+    encoder_embed_dim,
+    encoder_depth,
+    encoder_num_heads,
+    encoder_global_attn_indexes,
+    num_classes = 1,
+    checkpoint=None,
+):
+    dev = args.devices
+    prompt_embed_dim = 256
+    image_size = 1024
+    vit_patch_size = 16
+    image_embedding_size = image_size // vit_patch_size
+    sam = Sam(
+        args,
+        image_encoder=ImageEncoderViT(
+            args = args,
+            depth=encoder_depth,
+            embed_dim=encoder_embed_dim,
+            img_size=image_size,
+            mlp_ratio=4,
+            norm_layer=partial(torch.nn.LayerNorm, eps=1e-6),
+            num_heads=encoder_num_heads,
+            patch_size=vit_patch_size,
+            qkv_bias=True,
+            use_rel_pos=True,
+            global_attn_indexes=encoder_global_attn_indexes,
+            window_size=14,
+            out_chans=prompt_embed_dim,
+        ),
+        prompt_encoder=PromptEncoder(
+            embed_dim=prompt_embed_dim,
+            image_embedding_size=(image_embedding_size, image_embedding_size),
+            input_image_size=(image_size, image_size),
+            mask_in_chans=16,
+        ),
+        mask_decoder=MaskDecoder(
+            #num_multimask_outputs=3,
+            num_multimask_outputs = num_classes,
+            transformer=TwoWayTransformer(
+                args = args,
+                depth=2,
+                embedding_dim=prompt_embed_dim,
+                mlp_dim=2048,
+                num_heads=8,
+            ),
+            transformer_dim=prompt_embed_dim,
+            iou_head_depth=3,
+            iou_head_hidden_dim=256,
+        ),
+        pixel_mean=[123.675, 116.28, 103.53],
+        pixel_std=[58.395, 57.12, 57.375],
+    )
+    sam.eval()
+        
+    checkpoint = Path(checkpoint)
     if checkpoint.name == "sam_vit_b_01ec64.pth" and not checkpoint.exists():
         cmd = input("Download sam_vit_b_01ec64.pth from facebook AI? [y]/n: ")
         if len(cmd) == 0 or cmd.lower() == 'y':
@@ -159,7 +178,6 @@ def _build_sam(args,encoder_embed_dim,encoder_depth,encoder_num_heads,encoder_gl
                 checkpoint,
             )
             print(checkpoint.name, " is downloaded!")
-
     elif checkpoint.name == "sam_vit_h_4b8939.pth" and not checkpoint.exists():
         
         checkpoint.parent.mkdir(parents=True, exist_ok=True)
@@ -197,8 +215,7 @@ def _build_sam(args,encoder_embed_dim,encoder_depth,encoder_num_heads,encoder_gl
     return sam
 
 
-
-
+# from https://github.com/11yxk/SAM-LST/blob/main/segment_anything/build_sam.py
 def load_from(sam, state_dict, image_size, vit_patch_size):
     sam_dict = sam.state_dict()
     except_keys = ['mask_tokens', 'output_hypernetworks_mlps', 'iou_prediction_head']
@@ -207,6 +224,7 @@ def load_from(sam, state_dict, image_size, vit_patch_size):
     pos_embed = new_state_dict['image_encoder.pos_embed']
     token_size = int(image_size // vit_patch_size)
     if pos_embed.shape[1] != token_size:
+        # resize pos embedding, which may sacrifice the performance, but I have no better idea
         pos_embed = pos_embed.permute(0, 3, 1, 2)  # [b, c, h, w]
         pos_embed = F.interpolate(pos_embed, (token_size, token_size), mode='bilinear', align_corners=False)
         pos_embed = pos_embed.permute(0, 2, 3, 1)  # [b, h, w, c]
@@ -223,8 +241,9 @@ def load_from(sam, state_dict, image_size, vit_patch_size):
     return sam_dict
 
 
-def load_from_mobile(sam,state_dict):
-    sam_dict=sam.state_dict()
+def load_from_mobile(sam, state_dict):
+    sam_dict = sam.state_dict()
+    #except_keys = ['patch_embed','mask_tokens', 'output_hypernetworks_mlps', 'iou_prediction_head']
     except_keys = ['mask_tokens', 'output_hypernetworks_mlps', 'iou_prediction_head']
     new_state_dict = {k: v for k, v in state_dict.items() if
                       k in sam_dict.keys() and except_keys[0] not in k and except_keys[1] not in k and except_keys[2] not in k}

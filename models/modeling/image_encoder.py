@@ -6,7 +6,7 @@ import math
 
 
 from typing import Optional,Tuple,Type
-from common import LayerNorm2d,MLPBlock,Adapter
+from .common import LayerNorm2d,MLPBlock,Adapter
 
 class ImageEncoderViT(nn.Module):
     def __init__(self, args, image_size: int = 1024, patch_size: int = 16, in_chans: int = 3, embed_dim: int = 768, depth: int = 12, num_heads: int = 12, mlp_ratio: float = 4.0,
